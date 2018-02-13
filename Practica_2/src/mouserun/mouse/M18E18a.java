@@ -9,7 +9,7 @@ public class M18E18a extends Mouse {
 
     private ArrayList<Grid> celdasVisitadas;
     /**
-     * Constructor, Hola
+     * Constructor
      */
     public M18E18a(){
         super("Ratotuille");
@@ -21,23 +21,30 @@ public class M18E18a extends Mouse {
     public int move(Grid currentGrid, Cheese cheese) {
         celdasVisitadas.add( currentGrid );
 
-        ArrayList<Integer> possibleMoves = new ArrayList<>();
-        if (currentGrid.canGoUp()) possibleMoves.add(Mouse.UP);
-        if (currentGrid.canGoDown()) possibleMoves.add(Mouse.DOWN);
-        if (currentGrid.canGoLeft()) possibleMoves.add(Mouse.LEFT);
-        if (currentGrid.canGoRight()) possibleMoves.add(Mouse.RIGHT);
-        possibleMoves.add(Mouse.BOMB);
-
-        return Mouse.UP;
+        return busqueda(currentGrid);
     }
 
-    public boolean busqueda( Grid currentGrid ){
-        for (int i = 0; i < celdasVisitadas.size(); i++) {
-            if ( celdasVisitadas.get(i).getX() == currentGrid.getX()+1 ) return false;
-            if ( celdasVisitadas.get(i).getY() == currentGrid.getY()+1 ) return false;
-            if ( celdasVisitadas.get(i).getX() == currentGrid.getX()-1 ) return false;
+    public int busqueda( Grid currentGrid ) {
+        boolean control=true;
+        if (currentGrid.canGoUp()) {
+            for (int i = 0; i < celdasVisitadas.size(); i++) {
+                if (celdasVisitadas.get(i).getY() == currentGrid.getY() + 1) control=false;
+            }
+            if(control) return Mouse.UP;
         }
-        return true;
+        if (currentGrid.canGoRight()) {
+            for (int i = 0; i < celdasVisitadas.size(); i++) {
+                if (celdasVisitadas.get(i).getX() == currentGrid.getX() + 1) control=false;
+            }
+            if(control) return Mouse.RIGHT;
+        }
+        if (currentGrid.canGoLeft()) {
+            for (int i = 0; i < celdasVisitadas.size(); i++) {
+                if (celdasVisitadas.get(i).getX() != currentGrid.getX() - 1) control=false;
+            }
+            if(control) return Mouse.LEFT;
+        }
+        return Mouse.DOWN;
     }
 
     @Override
