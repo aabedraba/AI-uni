@@ -7,16 +7,42 @@ import java.util.*;
 
 public class M18E18a extends Mouse {
 
+    private ArrayList<Grid> celdasVisitadas;
     /**
-     * Constructor
+     * Constructor, Hola
      */
     public M18E18a(){
         super("Ratotuille");
+        this.celdasVisitadas = new ArrayList<>();
+
     }
 
     @Override
     public int move(Grid currentGrid, Cheese cheese) {
-        return 0;
+        celdasVisitadas.add( currentGrid );
+
+        ArrayList<Integer> possibleMoves = new ArrayList<>();
+        if (currentGrid.canGoUp()) possibleMoves.add(Mouse.UP);
+        if (currentGrid.canGoDown()) possibleMoves.add(Mouse.DOWN);
+        if (currentGrid.canGoLeft()) possibleMoves.add(Mouse.LEFT);
+        if (currentGrid.canGoRight()) possibleMoves.add(Mouse.RIGHT);
+        possibleMoves.add(Mouse.BOMB);
+
+        if ( currentGrid.canGoRight() ){
+            if ( busquedaDerecha( currentGrid ) )
+                return Mouse.RIGHT;
+        }
+
+        return Mouse.UP;
+    }
+
+    public boolean busqueda( Grid currentGrid ){
+        for (int i = 0; i < celdasVisitadas.size(); i++) {
+            if ( celdasVisitadas.get(i).getX() == currentGrid.getX()+1 ) return false;
+            if ( celdasVisitadas.get(i).getY() == currentGrid.getY()+1 ) return false;
+            if ( celdasVisitadas.get(i).getX() == currentGrid.getX()-1 ) return false;
+        }
+        return true;
     }
 
     @Override
