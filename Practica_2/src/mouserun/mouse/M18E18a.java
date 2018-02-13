@@ -8,7 +8,7 @@ import java.util.*;
 public class M18E18a extends Mouse {
 
     /**
-     * Constructor
+     * Constructor Hola
      */
     public M18E18a(){
         super("Ratotuille");
