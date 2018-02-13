@@ -1,0 +1,7 @@
+build/
+dist/
+nbproject/
+test/
+out/
+.idea/
+Practica_2.iml
