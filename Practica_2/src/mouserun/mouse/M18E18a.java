@@ -28,11 +28,6 @@ public class M18E18a extends Mouse {
         if (currentGrid.canGoRight()) possibleMoves.add(Mouse.RIGHT);
         possibleMoves.add(Mouse.BOMB);
 
-        if ( currentGrid.canGoRight() ){
-            if ( busquedaDerecha( currentGrid ) )
-                return Mouse.RIGHT;
-        }
-
         return Mouse.UP;
     }
 
