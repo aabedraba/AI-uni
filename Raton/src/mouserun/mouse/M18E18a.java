@@ -50,9 +50,6 @@ public class M18E18a extends Mouse {
         //Primero añadimos la casilla actual a las celdas visitadas.
         celdasVisitadas.add( currentGrid );
         
-        //A continuacion incrementamos los pasos dados.
-        this.incSteps();
-        
         /**
          * Por ultimo llamamos a la funcion busqueda, la cual concentra todo el 
          * codigo usado para que el raton sepa a donde ir.
