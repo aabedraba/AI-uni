@@ -6,51 +6,61 @@ import mouserun.game.Mouse;
 
 import java.util.*;
 
-public class Explorador extends Mouse {
 
-    Grid celdaActual;
-    HashMap<Integer, Grid> celdasPez;
-    HashMap<Integer, Grid> celdasElefante;
-    LinkedList<Integer> movimientos;
+public class Explorador extends Mouse {
 
     private final Integer SIN_MOVIMIENTOS = 0;
 
+    HashMap<Integer, Grid> memoriaPez;
+    HashMap<Integer, Grid> memoriaElefante;
+    LinkedList<Integer> movimientos;
+
     public Explorador(){
         super("Explorador");
-        this.celdasPez = new HashMap<>();
-        this.celdasElefante = new HashMap<>();
+        this.memoriaPez = new HashMap<>();
+        this.memoriaElefante = new HashMap<>();
         this.movimientos = new LinkedList<>();
     }
 
     @Override
     public int move(Grid currentGrid, Cheese cheese) {
-        celdaActual = currentGrid;
-        aniadeCasilla();
-        Integer movimiento = posiblesMovimientos();
+        aniadeCelda( currentGrid );
+        Integer movimiento = posiblesMovimientos( currentGrid );
         if ( movimiento != SIN_MOVIMIENTOS )
             return movimiento;
         else
             return sinMovimientos();
     }
 
+    @Override
+    public void respawned() {
+
+    }
+
+    @Override
+    public void newCheese() {
+        memoriaPez = new HashMap<Integer, Grid>();
+        movimientos = new LinkedList<>();
+    }
+
     private Integer sinMovimientos(){
         if ( !movimientos.isEmpty() ){
             return movimientos.pop();
         } else {
-            celdasPez = new HashMap<>();
+            memoriaPez = new HashMap<>();
         }
         return Mouse.BOMB;
     }
 
-    private void aniadeCasilla(){
-        int x = celdaActual.getX();
-        int y = celdaActual.getY();
+    private void aniadeCelda( Grid celda ){
+        int x = celda.getX();
+        int y = celda.getY();
 
-        if (celdasPez.get(clave(x, y)) == null)
-            celdasPez.put(clave(x, y), celdaActual);
+        if (memoriaPez.get(clave(x, y)) == null)
+            memoriaPez.put(clave(x, y), celda);
 
-        if (celdasElefante.get(clave(x, y)) == null) {
-            celdasElefante.put(clave(x, y), celdaActual);
+        if (memoriaElefante.get(clave(x, y)) == null) {
+            memoriaElefante.put(clave(x, y), celda);
             incExploredGrids();
         }
     }
@@ -59,9 +69,9 @@ public class Explorador extends Mouse {
         return (x*10000+y);
     }
 
-    private Boolean seHaVisitado(Integer direccion ){
-        int x = celdaActual.getX();
-        int y = celdaActual.getY();
+    private Boolean seHaVisitado(Integer direccion, Grid celda ){
+        int x = celda.getX();
+        int y = celda.getY();
 
         switch ( direccion ){
             case Mouse.UP:
@@ -77,20 +87,19 @@ public class Explorador extends Mouse {
                 x++;
                 break;
         }
-
-        return !(celdasPez.get(clave( x, y)) == null);
+        return !(memoriaPez.get(clave( x, y)) == null);
     }
 
-    public Integer posiblesMovimientos(){
+    public Integer posiblesMovimientos( Grid celda ){
         ArrayList<Integer> posibles = new ArrayList<>();
-        if ( celdaActual.canGoDown() ) posibles.add( Mouse.DOWN) ;
-        if ( celdaActual.canGoUp() ) posibles.add( Mouse.UP) ;
-        if ( celdaActual.canGoLeft() ) posibles.add( Mouse.LEFT) ;
-        if ( celdaActual.canGoRight() ) posibles.add( Mouse.RIGHT) ;
+        if ( celda.canGoDown() ) posibles.add( Mouse.DOWN) ;
+        if ( celda.canGoUp() ) posibles.add( Mouse.UP) ;
+        if ( celda.canGoLeft() ) posibles.add( Mouse.LEFT) ;
+        if ( celda.canGoRight() ) posibles.add( Mouse.RIGHT) ;
         if ( !posibles.isEmpty() ){
             for (int i = 0; i < posibles.size(); i++) {
                 Integer movimiento = posibles.get(i);
-                if ( !seHaVisitado( movimiento ) ){
+                if ( !seHaVisitado( movimiento, celda ) ){
                     movimientos.push(contrario(movimiento));
                     return movimiento;
                 }
@@ -98,21 +107,11 @@ public class Explorador extends Mouse {
         }
         return SIN_MOVIMIENTOS;
     }
-    @Override
-    public void respawned() {
 
-    }
-
-    @Override
-    public void newCheese() {
-        celdasPez = new HashMap<Integer, Grid>();
-        movimientos = new LinkedList<>();
-    }
-
-    private Integer contrario( Integer movimiento ){
+    private Integer contrario( Integer direccion ){
         Integer contrario = null;
 
-        switch ( movimiento ){
+        switch ( direccion ){
             case Mouse.UP:
                 contrario = Mouse.DOWN;
                 break;
