@@ -11,9 +11,9 @@ public class Explorador extends Mouse {
 
     private final Integer SIN_MOVIMIENTOS = 0;
 
-    HashMap<Integer, Grid> memoriaPez;
-    HashMap<Integer, Grid> memoriaElefante;
-    LinkedList<Integer> movimientos;
+    private HashMap<Integer, Grid> memoriaPez;
+    private HashMap<Integer, Grid> memoriaElefante;
+    private LinkedList<Integer> movimientos;
 
     public Explorador(){
         super("Explorador");
@@ -26,7 +26,7 @@ public class Explorador extends Mouse {
     public int move(Grid currentGrid, Cheese cheese) {
         aniadeCelda( currentGrid );
         Integer movimiento = posiblesMovimientos( currentGrid );
-        if ( movimiento != SIN_MOVIMIENTOS )
+        if ( movimiento.equals( SIN_MOVIMIENTOS ) )
             return movimiento;
         else
             return sinMovimientos();
@@ -34,13 +34,12 @@ public class Explorador extends Mouse {
 
     @Override
     public void respawned() {
-
+        memoriaPez = new HashMap<>();
+        movimientos = new LinkedList<>();
     }
 
     @Override
     public void newCheese() {
-        memoriaPez = new HashMap<Integer, Grid>();
-        movimientos = new LinkedList<>();
     }
 
     private Integer sinMovimientos(){
@@ -56,8 +55,7 @@ public class Explorador extends Mouse {
         int x = celda.getX();
         int y = celda.getY();
 
-        if (memoriaPez.get(clave(x, y)) == null)
-            memoriaPez.put(clave(x, y), celda);
+        memoriaPez.putIfAbsent( clave(x, y), celda );
 
         if (memoriaElefante.get(clave(x, y)) == null) {
             memoriaElefante.put(clave(x, y), celda);
@@ -90,7 +88,7 @@ public class Explorador extends Mouse {
         return !(memoriaPez.get(clave( x, y)) == null);
     }
 
-    public Integer posiblesMovimientos( Grid celda ){
+    private Integer posiblesMovimientos( Grid celda ){
         ArrayList<Integer> posibles = new ArrayList<>();
         if ( celda.canGoDown() ) posibles.add( Mouse.DOWN) ;
         if ( celda.canGoUp() ) posibles.add( Mouse.UP) ;
