@@ -26,7 +26,7 @@ public class Explorador extends Mouse {
     public int move(Grid currentGrid, Cheese cheese) {
         aniadeCelda( currentGrid );
         Integer movimiento = posiblesMovimientos( currentGrid );
-        if ( movimiento.equals( SIN_MOVIMIENTOS ) )
+        if ( !movimiento.equals( SIN_MOVIMIENTOS ) )
             return movimiento;
         else
             return sinMovimientos();
