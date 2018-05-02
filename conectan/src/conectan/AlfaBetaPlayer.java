@@ -1,73 +1,56 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package conectan;
 
 
 /**
- *
- * @author José María Serrano
- * @version 1.3 Departamento de Informática. Universidad de Jáen
- *
- * Inteligencia Artificial. 2º Curso. Grado en Ingeniería Informática
- *
- * Clase AlfaBetaPlayer para representar al jugador CPU que usa la poda Alfa
- * Beta
- *
- * Esta clase es la que tenemos que implementar y completar
- *
+ * @author Abdallah Abedraba y Sergio Jiménez Moreno
  */
 public class AlfaBetaPlayer extends Player {
     private int maxDepth;
     private int n_filas;
     private int n_columnas;
-    private int conecta;
+    private int conectan;
 
-    private int max( int x, int y ){
-        if ( x >= y )
+    private int max(int x, int y) {
+        if (x >= y)
             return x;
         else
             return y;
     }
 
-    private int min( int x, int y ){
-        if ( x < y )
+    private int min(int x, int y) {
+        if (x < y)
             return x;
         else
             return y;
     }
 
     /**
-     *
      * @param tablero Representación del tablero de juego
      * @param conecta Número de fichas consecutivas para ganar
      * @return Jugador ganador (si lo hay)
      */
     @Override
     public int jugada(Grid tablero, int conecta) {
-        // ...
-        // Calcular la mejor columna posible donde hacer nuestra jugada
         maxDepth = conecta;
         n_columnas = tablero.getColumnas();
         n_filas = tablero.getFilas();
+        conectan = conecta;
         int matriz[][] = tablero.toArray();
-        int columna = minMax(  matriz );
+        int columna = minMax(matriz);
         return tablero.checkWin(tablero.setButton(columna, ConectaN.JUGADOR2), columna, conecta);
     } // jugada
 
-    private int minMax( int matriz[][] ){
+    private int minMax(int matriz[][]) {
         int mejor_mov = -1;
         int max, max_actual;
         max = Integer.MIN_VALUE;
         for (int i = 0; i < n_columnas; i++) {
-            if ( !columnaLlena( matriz, i ) ){
-                int temp = insertar( matriz, i, ConectaN.JUGADOR2 );
-                int isFin = checkWin( matriz, temp, i, conecta );
-                max_actual = minValue(matriz, 0, Integer.MIN_VALUE, Integer.MAX_VALUE, isFin );
+            if (!columnaLlena(matriz, i)) {
+                int temp = insertar(matriz, i, ConectaN.JUGADOR2);
+                int isFin = checkWin(matriz, temp, i, conectan);
+                max_actual = minValue(matriz, 0, Integer.MIN_VALUE, Integer.MAX_VALUE, isFin);
                 matriz[temp][i] = 0;
-                if ( max_actual > max ){
+                if (max_actual > max) {
                     max = max_actual;
                     mejor_mov = i;
                 }
@@ -76,23 +59,23 @@ public class AlfaBetaPlayer extends Player {
         return mejor_mov;
     }
 
-    private int minValue( int current[][], int depth, int alpha, int beta, int isFin ){
-        if ( isFin != 0 ){
-            return heuristica( current, isFin );
+    private int minValue(int current[][], int depth, int alpha, int beta, int isFin) {
+        if (isFin != 0) {
+            return heuristica(current, isFin);
         } else {
-            if ( esEmpate( current ) ){
-                return heuristica( current, isFin );
+            if (esEmpate(current)) {
+                return heuristica(current, isFin);
             } else {
-                if ( depth > maxDepth ){
-                    return heuristica( current, isFin );
+                if (depth > maxDepth) {
+                    return heuristica(current, isFin);
                 } else {
                     for (int i = 0; i < n_columnas; i++) {
-                        if ( !columnaLlena( current, i ) ){
-                            int temp = insertar( current, i, ConectaN.JUGADOR2 );
-                            isFin = checkWin( current, temp, i, conecta );
-                            beta = min(beta, maxValue( current,depth+1, alpha, beta, isFin ));
+                        if (!columnaLlena(current, i)) {
+                            int temp = insertar(current, i, ConectaN.JUGADOR1);
+                            isFin = checkWin(current, temp, i, conectan);
+                            beta = min(beta, maxValue(current, depth + 1, alpha, beta, isFin));
                             current[temp][i] = 0;
-                            if ( alpha >= beta )
+                            if (alpha >= beta)
                                 return alpha;
                         }
                     }
@@ -102,23 +85,23 @@ public class AlfaBetaPlayer extends Player {
         }
     }
 
-    private int maxValue( int current[][], int depth, int alpha, int beta, int isFin ){
-        if ( isFin != ConectaN.VACIO ){
-            return heuristica( current, isFin );
+    private int maxValue(int current[][], int depth, int alpha, int beta, int isFin) {
+        if (isFin != ConectaN.VACIO) {
+            return heuristica(current, isFin);
         } else {
-            if ( esEmpate( current ) ){
-                return heuristica( current, isFin );
+            if (esEmpate(current)) {
+                return heuristica(current, isFin);
             } else {
-                if ( depth > maxDepth ){
-                    return heuristica( current, isFin );
+                if (depth > maxDepth) {
+                    return heuristica(current, isFin);
                 } else {
                     for (int i = 0; i < n_columnas; i++) {
-                        if ( !columnaLlena( current, i ) ){
-                            int temp = insertar( current, i, ConectaN.JUGADOR1 );
-                            isFin = checkWin( current, temp, i, conecta );
-                            alpha = max( alpha, minValue( current, depth+1, alpha, beta, isFin ));
+                        if (!columnaLlena(current, i)) {
+                            int temp = insertar(current, i, ConectaN.JUGADOR2);
+                            isFin = checkWin(current, temp, i, conectan);
+                            alpha = max(alpha, minValue(current, depth + 1, alpha, beta, isFin));
                             current[temp][i] = 0;
-                            if ( alpha >= beta )
+                            if (alpha >= beta)
                                 return beta;
                         }
                     }
@@ -128,38 +111,59 @@ public class AlfaBetaPlayer extends Player {
         }
     }
 
-    private int heuristica( int current[][], int isFin ){
+    private int heuristica(int current[][], int isFin) {
         int costo = 0;
-        if ( isFin != 0 ){
-            if ( isFin == ConectaN.JUGADOR2 )
+        if (isFin != 0) {
+            if (isFin == ConectaN.JUGADOR2)
                 return 10000;
             else
                 return -10000;
         }
-//        costo = costoU(current, ConectaN.JUGADOR2 ) - costoU(current, ConectaN.JUGADOR1 );
+        costo = costoU(current, ConectaN.JUGADOR2) - costoU(current, ConectaN.JUGADOR1);
         return costo;
     }
 
-//    private int costoU( int current[][], int jugador ){
-//        Grid copia;
-//        int puntuacion = 0;
-//        for (int i = 0; i < n_columnas; i++) {
-//            int temp = copia.getButton( i, jugador );
-//            int estado = copia.checkWin( temp, i, conecta );
-//            if ( estado == jugador )
-//                puntuacion += 10;
-//        }
-//        return puntuacion;
-//    }
+    private int costoU(int current[][], int jugador) {
+        int puntuacion = 0;
+        for (int i = 0; i < n_columnas; i++) {
+            if (!columnaLlena(current, i)) {
+                int temp = insertar(current, i, jugador);
+                int estado = checkWin(current, temp, i, conectan);
+                if (estado == jugador)
+                    puntuacion += 10;
+                current[temp][i] = 0;
+            }
+        }
+        return puntuacion;
+    }
+
+    public int insertar(int m[][], int col, int jugador) {
+        int y = n_filas - 1;
+        //Ir a la última posición de la columna
+        while ((y >= 0) && (m[y][col] != 0)) {
+            y--;
+        }
+        m[y][col] = jugador;
+        return y;
+    }
+
+    private Boolean columnaLlena(int matriz[][], int col) {
+        if (matriz[0][col] != 0)
+            return true;
+        return false;
+    }
+
+    private Boolean esEmpate(int matriz[][]) {
+        for (int i = 0; i < n_columnas; i++) {
+            if (matriz[0][i] == 0)
+                return false;
+        }
+        return true;
+    }
 
     // Comprobar si el tablero se halla en un estado de fin de partida,
     // a partir de la última jugada realizada
     public int checkWin(int boton_int[][], int x, int y, int conecta) {
-        /*
-         *	x fila
-         *	y columna
-         */
-
         //Comprobar vertical
         int ganar1 = 0;
         int ganar2 = 0;
@@ -310,31 +314,6 @@ public class AlfaBetaPlayer extends Player {
 
         return ganador;
     } // checkWin
-
-    public int insertar(int m[][],int col, int jugador) {
-        int y = n_filas - 1;
-        //Ir a la última posición de la columna
-        while ((y >= 0) && (m[y][col] != 0)) {
-            y--;
-        }
-        m[y][col] = jugador;
-        return y;
-    }
-
-    private Boolean columnaLlena( int matriz[][], int col ){
-        if ( matriz[0][col] != 0 )
-            return true;
-        return false;
-    }
-
-    private Boolean esEmpate( int matriz[][] ){
-        for (int i = 0; i < n_columnas; i++) {
-            if ( matriz[0][i] == 0 )
-                return false;
-        }
-        return true;
-    }
-
 //
 //    private Boolean
 } // AlfaBetaPlayer
