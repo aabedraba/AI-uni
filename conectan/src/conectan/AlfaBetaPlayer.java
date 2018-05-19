@@ -1,268 +1,291 @@
+/*
+ * @author Manuel Alférez Ruiz
+ * @date 27 de abril de 2018, 9:40
+ * @note Inteligencia Artificial. 2º Curso. Grado en Ingeniería Informática
+ */
 package conectan;
 
-
 /**
- * @author Abdallah Abedraba y Sergio Jiménez Moreno
+ * Clase AlfaBetaPlayer para representar al jugador CPU que usa la poda Alfa
+ * Beta
  */
 public class AlfaBetaPlayer extends Player {
-    private int maxDepth;
-    private int n_filas;
-    private int n_columnas;
-    private int conectan;
+
+    private int filas; //<Número de filas del Tablero
+    private int columnas; //<Número de columnas del Tablero
+    private int connects; //<Número de fichas que han de alinearse para ganar
+
+    private int profundidadMaxima; //<Profundidad máxima establecida
 
     /**
+     *
      * @param tablero Representación del tablero de juego
      * @param conecta Número de fichas consecutivas para ganar
      * @return Jugador ganador (si lo hay)
      */
     @Override
     public int jugada(Grid tablero, int conecta) {
-        maxDepth = conecta;
-        n_columnas = tablero.getColumnas();
-        n_filas = tablero.getFilas();
-        conectan = conecta;
+
+        // Inicialización de valores
+        filas = tablero.getFilas();
+        columnas = tablero.getColumnas();
+        connects = conecta;
+
+        profundidadMaxima = conecta;
         int matriz[][] = tablero.toArray();
-        int columna = minMax(matriz);
-        return tablero.checkWin(tablero.setButton(columna, ConectaN.JUGADOR2), columna, conecta);
+        // Calcular la mejor columna posible donde hacer nuestra jugada
+        int mejorColumna = minimax(matriz);
+
+        return tablero.checkWin(tablero.setButton(mejorColumna, ConectaN.JUGADOR2), mejorColumna, conecta);
     } // jugada
 
     /**
-     * Algoritmo minMax. El estado actual es el estado de la partida en el momento de la jugada (nodo inicial)
-     * y se sopesan n_columnas posibilidades a las cuales se aplica a cada una la poda alfa-beta.
-     *
-     * @param matriz matriz con el estado actual de la partida
-     * @return la columna con el mejor movimiento.
+     * @brief Algoritmo minimax
+     * @param tab El estado actual de tablero
+     * @return Devuelve la mejor columna donde poner ficha
      */
-    private int minMax(int matriz[][]) {
-        int mejorJugada = -1; // mejorJugada será la mejor columna con la que jugar
-        int max, maxTemp; // max será el máximo para el nodo inicial de la poda alfa-beta.
-        max = Integer.MIN_VALUE; // inicializamos max al menor valor posible
-        for (int i = 0; i < n_columnas; i++) {
-            if (!columnaLlena(matriz, i)) {
-                int x = insertar(matriz, i, ConectaN.JUGADOR2);
-                int estadoPartida = checkWin(matriz, x, i, conectan);
-                // para el minValue utilizamos los valores +inf y -inf ya que cada jugada debe sopesarse por sí sola
-                maxTemp = podaMin(matriz, 0, Integer.MIN_VALUE, Integer.MAX_VALUE, estadoPartida);
-                matriz[x][i] = 0;
-                if (maxTemp > max) {
-                    max = maxTemp;
-                    mejorJugada = i;
+    private int minimax(int tab[][]) {
+
+        int mejorColumna = -1; //Mejor columna donde poner ficha
+
+        int max, aux, posFila, util;
+        max = Integer.MIN_VALUE;
+        for (int i = 0; i < columnas; i++) {
+            if (!columnaLlena(tab, i)) {
+                posFila = ponerFicha(tab, i, ConectaN.JUGADOR2);
+                util = valorUtilidad(tab, posFila, i);
+                aux = min_valor(tab, Integer.MIN_VALUE, Integer.MAX_VALUE, 0, util);
+                tab[posFila][i] = 0;
+                if (aux > max) {
+                    max = aux;
+                    mejorColumna = i;
                 }
             }
         }
-        return mejorJugada;
-    }
+
+        return mejorColumna;
+    } // minimax
 
     /**
-     * Algoritmo Min de la poda Alfa-Beta.
-     * En caso de que la partida no haya llegado a un fin sigue creando diferentes posibilidades para pasarlas
-     * a la fase podaMax.
-     *
-     * @param matriz        matriz que representa el estado actual de la partida
-     * @param depth         profunidad en el árbol minMax (no debe ser mayor que la profundidad máxima establecida)
-     * @param alpha         valor del alfa actual
-     * @param beta          valor del beta actual
-     * @param estadoPartida estado de la partida. -1 o 1 si alguien gana, 0 si sigue en juego
-     * @return el valor mínimo para el nodo Min del árbol
+     * @brief Haya un valor de utilidad maximizando la función de utilidad
+     * @param tab Representación del tablero de juego
+     * @param max Valor de la mejor alternativa para JUGADOR1 a lo largo del
+     * camino
+     * @param min Valor de la mejor alternativa para JUGADOR2 a lo largo del
+     * camino
+     * @param prof Profundidad en el árbol
+     * @param util Valor de utilidad que informa sobre el estado de la partida:
+     * 1 si gana el JUGADOR1, -1 si gana el JUGADOR2 y 0 si nadie gana
+     * @return Devuelve un valor máximo de utilidad
      */
-    private int podaMin(int[][] matriz, int depth, int alpha, int beta, int estadoPartida) {
-        if (estadoPartida != 0 || esEmpate(matriz) || depth > maxDepth) {
-            return puntuacion(matriz, estadoPartida);
+    public int max_valor(int tab[][], int max, int min, int prof, int util) {
+
+        //Si el valor de utilidad es final
+        if (util != 0 || prof > profundidadMaxima || esEmpate(tab)) {
+            return valor(tab, util);
         } else {
-            for (int i = 0; i < n_columnas; i++) {
-                if (!columnaLlena(matriz, i)) {
-                    int fila = insertar(matriz, i, ConectaN.JUGADOR1);
-                    estadoPartida = checkWin(matriz, fila, i, conectan);
-                    beta = menor(beta, podaMax(matriz, depth + 1, alpha, beta, estadoPartida));
-                    matriz[fila][i] = 0; //quitamos la jugada
-                    if (alpha >= beta)
-                        return alpha;
+            int posFila; // Fila donde se queda la ficha tras insertarla
+            for (int i = 0; i < columnas; i++) { //Recorremos todas las columnas
+                if (!columnaLlena(tab, i)) { //Si la columna i no esta llena
+                    posFila = ponerFicha(tab, i, ConectaN.JUGADOR2);
+                    util = valorUtilidad(tab, posFila, i);
+                    max = MAX(max, min_valor(tab, max, min, prof + 1, util));
+                    tab[posFila][i] = 0;
+                    if (max >= min) {
+                        return min;
+                    }
                 }
             }
-            return beta;
+            return max;
         }
-    }
+    } // max_valor
 
     /**
-     * Algoritmo Max de la poda Alfa-Beta.
-     * En caso de que la partida no haya llegado a un fin sigue creando diferentes posibilidades para pasarlas
-     * a la fase podaMin.
-     *
-     * @param matriz        matriz que representa el estado actual de la partida
-     * @param depth         profunidad en el árbol minMax (no debe ser mayor que la profundidad máxima establecida)
-     * @param alpha         valor del alfa actual
-     * @param beta          valor del beta actual
-     * @param estadoPartida estado de la partida. -1 o 1 si alguien gana, 0 si sigue en juego
-     * @return el valor mínimo para el nodo Min del árbol
+     * @brief Haya un valor de utilidad minimizando la función de utilidad
+     * @param tab Representación del tablero de juego
+     * @param max Valor de la mejor alternativa para JUGADOR1 a lo largo del
+     * camino
+     * @param min Valor de la mejor alternativa para JUGADOR2 a lo largo del
+     * camino
+     * @param prof Profundidad en el árbol
+     * @param util Valor de utilidad que informa sobre el estado de la partida:
+     * 1 si gana el JUGADOR1, -1 si gana el JUGADOR2 y 0 si nadie gana
+     * @return Devuelve el valor mínimo de utilidad
      */
-    private int podaMax(int[][] matriz, int depth, int alpha, int beta, int estadoPartida) {
-        if (estadoPartida != 0 || esEmpate(matriz) || depth > maxDepth) {
-            return puntuacion(matriz, estadoPartida);
+    public int min_valor(int tab[][], int max, int min, int prof, int util) {
+
+        //Si el valor de utilidad es final
+        if (util != 0 || prof > profundidadMaxima || esEmpate(tab)) {
+            return valor(tab, util);
         } else {
-            for (int i = 0; i < n_columnas; i++) {
-                if (!columnaLlena(matriz, i)) {
-                    int fila = insertar(matriz, i, ConectaN.JUGADOR2);
-                    estadoPartida = checkWin(matriz, fila, i, conectan);
-                    alpha = mayor(alpha, podaMin(matriz, depth + 1, alpha, beta, estadoPartida));
-                    matriz[fila][i] = 0;
-                    if (alpha >= beta)
-                        return beta;
+            int posFila; // Fila donde se queda la ficha tras insertarla
+            for (int i = 0; i < columnas; i++) { //Recorremos todas las columnas
+                if (!columnaLlena(tab, i)) { //Si la columna i no esta llena
+                    posFila = ponerFicha(tab, i, ConectaN.JUGADOR1);
+                    util = valorUtilidad(tab, posFila, i);
+                    min = MIN(min, max_valor(tab, max, min, prof + 1, util));
+                    tab[posFila][i] = 0;
+                    if (max >= min) {
+                        return max;
+                    }
                 }
             }
-            return alpha;
+            return min;
         }
-    }
+    } // min_valor
 
     /**
-     * Función que asigna una puntuación a un nodo del árbol
-     *
-     * @param matriz        matriz que tiene la situación actual del juego
-     * @param estadoPartida estado de terminación de la partida
-     * @return  400 en caso de que gane, -400 en caso de que gane el
-     *          contrincante y en caso de que no haya llegado a un fin de
-     *          partida le asigna un valor atendiendo al beneficio propio.
-     *          El valor es positivo si es beneficioso, negativo en caso contrario.
+     * @brief Devuelve el entero que es mayor
+     * @param x Un valor de tipo entero
+     * @param y Un valor de tipo entero
+     * @return El entero mayor entre x e y
      */
-    private int puntuacion(int matriz[][], int estadoPartida) {
-        if (estadoPartida == ConectaN.JUGADOR2) {
-            return 400;
-        } else if (estadoPartida == ConectaN.JUGADOR1) {
-            return -400;
-        } else { // caso de que la partida no haya acabado
-            return utilidad(matriz, ConectaN.JUGADOR2) - utilidad(matriz, ConectaN.JUGADOR1);
-        }
-    }
-
-    /**
-     * Función que asigna una puntuación a cada jugada posible
-     * @param matriz matriz de la situación actual en el nodo
-     * @param jugador jugador al que se le calculará el beneficio
-     *                de su jugada
-     * @return puntuación asignada atendiendo al beneficio
-     */
-    private int utilidad(int matriz[][], int jugador) {
-        int puntuacion = 0;
-        for (int i = 0; i < n_columnas; i++) {
-            if (!columnaLlena(matriz, i)) {
-                int fila = insertar(matriz, i, jugador);
-                int estado = checkWin(matriz, fila, i, conectan);
-                if (estado == jugador)
-                    puntuacion += 10;
-                matriz[fila][i] = 0;
-            }
-        }
-        return puntuacion;
-    }
-
-    /*----FUNCIONES AUXILIARES----*/
-
-    /**
-     * Devuelve el máximo entre dos valores
-     *
-     * @param x primer valor
-     * @param y segundo valor
-     * @return el máximo de los dos valores
-     */
-    private int mayor(int x, int y) {
-        if (x >= y)
+    public int MAX(int x, int y) {
+        if (x >= y) {
             return x;
-        else
+        } else {
             return y;
-    }
+        }
+    } // MAX
 
     /**
-     * Devuelve el mínimo entre dos valores
-     *
-     * @param x primer valor
-     * @param y segundo valor
-     * @return el mínimo de los dos valores
+     * @brief Devuelve el entero que es menor
+     * @param x Un valor de tipo entero
+     * @param y Un valor de tipo entero
+     * @return El entero menor entre x e y
      */
-    private int menor(int x, int y) {
-        if (x < y)
+    public int MIN(int x, int y) {
+        if (x > y) {
+            return y;
+        } else {
             return x;
-        else
-            return y;
-    }
+        }
+    } // MIN
 
     /**
-     * Encuentra la fila libre en la columna col e introduce la ficha jugador
-     * OJO: llamar sólo cuando se ha comprobado que la fila no está llena
-     *
-     * @param m       matriz del juego en la que se inserta la ficha
-     * @param col     columna en la que se introduce la ficha
-     * @param jugador tipo de ficha que se va a introducir
-     * @return fila en la que se inserta la ficha
+     * @brief Comprueba si una columna esta completa
+     * @param tab Tablero de juego representado como matriz de enteros
+     * @param col Columna a comprobar
+     * @return True si esta completa y false en otro caso
      */
-    public int insertar(int m[][], int col, int jugador) {
-        int y = n_filas - 1;
-        //Ir a la última posición de la columna
-        while ((y >= 0) && (m[y][col] != 0)) {
+    public boolean columnaLlena(int tab[][], int col) {
+        return tab[0][col] != 0;
+    } // ColumnaLlena
+
+    /**
+     * @brief Coloca una ficha en la columna col
+     * @param tab Tablero de juego representado como matriz de enteros
+     * @param col Columna donde insertar la ficha
+     * @param jugador Representación numérica del jugador que pone la ficha
+     * @return Devuelve la fila donde se inserto la ficha
+     */
+    public int ponerFicha(int tab[][], int col, int jugador) {
+        int y = filas - 1;
+        //Buscamos la fila donde colocar la pieza
+        while ((y >= 0) && (tab[y][col] != 0)) {
             y--;
         }
-        m[y][col] = jugador;
+        tab[y][col] = jugador; //Colocamos la pieza
         return y;
-    }
+    } // ponerFicha
 
     /**
-     * Determina si la columna col está llena
-     *
-     * @param matriz matriz de la cual se comprobará la fila
-     * @param col    columna a sopesar
-     * @return true si la columna está llena, false en caso contrario
+     * @brief Determina si se ha llegado a empate
+     * @param tab Tablero de juego representado como matriz de enteros
+     * @return True si se ha llegado a empate y false en caso contrario
      */
-    private Boolean columnaLlena(int matriz[][], int col) {
-        if (matriz[0][col] != 0)
-            return true;
-        return false;
-    }
-
-    /**
-     * Determina si la matriz ha llegado a una situación de empate
-     *
-     * @param matriz matriz de la que se comprobará
-     * @return true en caso de que se haya llegado a una situación de empate,
-     * false en caso contrario
-     */
-    private Boolean esEmpate(int matriz[][]) {
-        for (int i = 0; i < n_columnas; i++) {
-            if (matriz[0][i] == 0)
+    public boolean esEmpate(int tab[][]) {
+        for (int i = 0; i < columnas; i++) {
+            if (tab[0][i] == 0) {
                 return false;
+            }
         }
         return true;
-    }
+    } // esEmpate
 
     /**
-     * Función basada en el Grid.checkWin
-     * Se ha añadido el parámetro boton_int[][] para poder trabajar con cualquier matriz
-     * y se han cambiado las variables de fila y columna a las globales definidas en esta
-     * clase (n_columnas, n_filas)
+     * @brief Calcula el valor de la partida
+     * @param tab Tablero de juego representado como matriz de enteros
+     * @param util Valorde utilidad: 1 si gana el JUGADOR1, -1 si gana el
+     * JUGADOR2 y 0 en otro caso
+     * @return Valor de utilidad (más preciso que el devuelto por la función
+     * valorUtilidad)
      */
-    public int checkWin(int boton_int[][], int x, int y, int conecta) {
+    public int valor(int tab[][], int util) {
+
+        switch (util) {
+            case ConectaN.JUGADOR1:
+                return -1000;
+            case ConectaN.JUGADOR2:
+                return 1000;
+            default:
+                //La partida aún no terminó
+                return valorParcial(tab, ConectaN.JUGADOR2) - valorParcial(tab, ConectaN.JUGADOR1);
+        }
+    } // valor
+
+    /**
+     * @brief Calcula un valor de utilidad para los posibles movimientos del
+     * jugador
+     * @param tab Tablero de juego representado como matriz de enteros
+     * @param jugador Representación numérica del jugador que pone la ficha
+     * @return Valor de utilidad parcial
+     */
+    public int valorParcial(int tab[][], int jugador) {
+
+        int x = 0;
+        int fila;
+        int util;
+        for (int i = 0; i < columnas; i++) {
+            if ( !columnaLlena( tab, i ) ) {
+                fila = ponerFicha(tab, i, jugador);
+                util = valorUtilidad(tab, fila, i);
+                if (util == jugador) {
+                    x += 5;
+                }
+                tab[fila][i] = 0;
+            }
+        }
+
+        return x;
+    } // valorParcial
+
+    /**
+     * @brief Comprobar si el tablero se halla en un estado de fin de partida, a
+     * partir de la última jugada realizada
+     * @param x Fila
+     * @param y Columna
+     * @param tab Tablero de juego representado como matriz de enteros
+     * @return Devuelve un valor de utilidad: 1 si gana el JUGADOR1, -1 si gana
+     * el JUGADOR2 y 0 en otro caso
+     */
+    public int valorUtilidad(int tab[][], int x, int y) {
+
         //Comprobar vertical
         int ganar1 = 0;
         int ganar2 = 0;
         int ganador = 0;
         boolean salir = false;
-        for (int i = 0; (i < n_filas) && !salir; i++) {
-            if (boton_int[i][y] != ConectaN.VACIO) {
-                if (boton_int[i][y] == ConectaN.JUGADOR1) {
+        for (int i = 0; (i < filas) && !salir; i++) {
+            if (tab[i][y] != ConectaN.VACIO) {
+                if (tab[i][y] == ConectaN.JUGADOR1) {
                     ganar1++;
                 } else {
                     ganar1 = 0;
                 }
                 // Gana el jugador 1
-                if (ganar1 == conecta) {
+                if (ganar1 == connects) {
                     ganador = ConectaN.JUGADOR1;
                     salir = true;
                 }
                 if (!salir) {
-                    if (boton_int[i][y] == ConectaN.JUGADOR2) {
+                    if (tab[i][y] == ConectaN.JUGADOR2) {
                         ganar2++;
                     } else {
                         ganar2 = 0;
                     }
                     // Gana el jugador 2
-                    if (ganar2 == conecta) {
+                    if (ganar2 == connects) {
                         ganador = ConectaN.JUGADOR2;
                         salir = true;
                     }
@@ -275,26 +298,26 @@ public class AlfaBetaPlayer extends Player {
         // Comprobar horizontal
         ganar1 = 0;
         ganar2 = 0;
-        for (int j = 0; (j < n_columnas) && !salir; j++) {
-            if (boton_int[x][j] != ConectaN.VACIO) {
-                if (boton_int[x][j] == ConectaN.JUGADOR1) {
+        for (int j = 0; (j < columnas) && !salir; j++) {
+            if (tab[x][j] != ConectaN.VACIO) {
+                if (tab[x][j] == ConectaN.JUGADOR1) {
                     ganar1++;
                 } else {
                     ganar1 = 0;
                 }
                 // Gana el jugador 1
-                if (ganar1 == conecta) {
+                if (ganar1 == connects) {
                     ganador = ConectaN.JUGADOR1;
                     salir = true;
                 }
                 if (ganador != ConectaN.JUGADOR1) {
-                    if (boton_int[x][j] == ConectaN.JUGADOR2) {
+                    if (tab[x][j] == ConectaN.JUGADOR2) {
                         ganar2++;
                     } else {
                         ganar2 = 0;
                     }
                     // Gana el jugador 2
-                    if (ganar2 == conecta) {
+                    if (ganar2 == connects) {
                         ganador = ConectaN.JUGADOR2;
                         salir = true;
                     }
@@ -313,26 +336,26 @@ public class AlfaBetaPlayer extends Player {
             a--;
             b--;
         }
-        while (b < n_columnas && a < n_filas && !salir) {
-            if (boton_int[a][b] != ConectaN.VACIO) {
-                if (boton_int[a][b] == ConectaN.JUGADOR1) {
+        while (b < columnas && a < filas && !salir) {
+            if (tab[a][b] != ConectaN.VACIO) {
+                if (tab[a][b] == ConectaN.JUGADOR1) {
                     ganar1++;
                 } else {
                     ganar1 = 0;
                 }
                 // Gana el jugador 1
-                if (ganar1 == conecta) {
+                if (ganar1 == connects) {
                     ganador = ConectaN.JUGADOR1;
                     salir = true;
                 }
                 if (ganador != ConectaN.JUGADOR1) {
-                    if (boton_int[a][b] == ConectaN.JUGADOR2) {
+                    if (tab[a][b] == ConectaN.JUGADOR2) {
                         ganar2++;
                     } else {
                         ganar2 = 0;
                     }
                     // Gana el jugador 2
-                    if (ganar2 == conecta) {
+                    if (ganar2 == connects) {
                         ganador = ConectaN.JUGADOR2;
                         salir = true;
                     }
@@ -350,30 +373,30 @@ public class AlfaBetaPlayer extends Player {
         a = x;
         b = y;
         //buscar posición de la esquina
-        while (b < n_columnas - 1 && a > 0) {
+        while (b < columnas - 1 && a > 0) {
             a--;
             b++;
         }
-        while (b > -1 && a < n_filas && !salir) {
-            if (boton_int[a][b] != ConectaN.VACIO) {
-                if (boton_int[a][b] == ConectaN.JUGADOR1) {
+        while (b > -1 && a < filas && !salir) {
+            if (tab[a][b] != ConectaN.VACIO) {
+                if (tab[a][b] == ConectaN.JUGADOR1) {
                     ganar1++;
                 } else {
                     ganar1 = 0;
                 }
                 // Gana el jugador 1
-                if (ganar1 == conecta) {
+                if (ganar1 == connects) {
                     ganador = ConectaN.JUGADOR1;
                     salir = true;
                 }
                 if (ganador != ConectaN.JUGADOR1) {
-                    if (boton_int[a][b] == ConectaN.JUGADOR2) {
+                    if (tab[a][b] == ConectaN.JUGADOR2) {
                         ganar2++;
                     } else {
                         ganar2 = 0;
                     }
                     // Gana el jugador 2
-                    if (ganar2 == conecta) {
+                    if (ganar2 == connects) {
                         ganador = ConectaN.JUGADOR2;
                         salir = true;
                     }
@@ -387,5 +410,6 @@ public class AlfaBetaPlayer extends Player {
         }
 
         return ganador;
-    } // checkWin
+    } // valorUtilidad
+
 } // AlfaBetaPlayer
